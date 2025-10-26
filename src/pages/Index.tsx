@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Activity, Shield, TrendingUp, Users, Bell, Database, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const features = [
     {
       icon: Activity,
@@ -62,17 +65,31 @@ const Index = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/dashboard">
-                <Button size="lg" variant="secondary" className="gap-2 text-lg px-8">
-                  View Dashboard
+              {user ? (
+                <>
+                  <Link to="/dashboard">
+                    <Button size="lg" variant="secondary" className="gap-2 text-lg px-8">
+                      View Dashboard
+                      <ArrowRight className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                  <Link to="/report">
+                    <Button size="lg" variant="outline" className="gap-2 text-lg px-8 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10">
+                      Report a Case
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="gap-2 text-lg px-8"
+                  onClick={() => navigate("/auth")}
+                >
+                  Get Started
                   <ArrowRight className="h-5 w-5" />
                 </Button>
-              </Link>
-              <Link to="/report">
-                <Button size="lg" variant="outline" className="gap-2 text-lg px-8 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10">
-                  Report a Case
-                </Button>
-              </Link>
+              )}
             </div>
           </div>
         </div>
@@ -137,7 +154,7 @@ const Index = () => {
             <p className="text-xl mb-8 text-primary-foreground/90">
               Join health authorities using IDSR to protect their communities
             </p>
-            <Link to="/dashboard">
+            <Link to={user ? "/dashboard" : "/auth"}>
               <Button size="lg" variant="secondary" className="gap-2 text-lg px-8">
                 Get Started
                 <ArrowRight className="h-5 w-5" />
