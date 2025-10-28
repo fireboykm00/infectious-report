@@ -2,54 +2,52 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Activity, Users, MapPin, Plus, Bell } from "lucide-react";
+import { AlertTriangle, Activity, Users, MapPin, Plus, Bell, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { format, formatDistanceToNow } from "date-fns";
+import { useCaseReports, useCaseStatistics } from "@/lib/api";
+import type { CaseReport } from "@/lib/types";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<"all" | "active" | "alert">("all");
+  const { data: caseStats, isLoading: statsLoading } = useCaseStatistics();
+  const { data: recentCases = [], isLoading: casesLoading } = useCaseReports(1, 5);
 
-  // Mock data - will be replaced with real data from Lovable Cloud
   const stats = [
-    { label: "Active Cases", value: "23", change: "+5 today", icon: Activity, variant: "default" as const },
-    { label: "Alert Threshold", value: "3", change: "Requires action", icon: AlertTriangle, variant: "warning" as const },
-    { label: "Facilities Reporting", value: "12", change: "Last 24h", icon: Users, variant: "success" as const },
-    { label: "Districts Affected", value: "4", change: "2 high-risk", icon: MapPin, variant: "default" as const },
-  ];
-
-  const recentCases = [
-    {
-      id: "CR-001",
-      disease: "Malaria",
-      facility: "Kigali Central Hospital",
-      district: "Gasabo",
-      status: "confirmed",
-      reportedAt: "2 hours ago",
-      severity: "high",
+    { 
+      label: "Active Cases", 
+      value: caseStats?.totalCases.toString() ?? "...", 
+      change: `${caseStats?.confirmedCases ?? 0} confirmed`, 
+      icon: Activity, 
+      variant: "default" as const 
     },
-    {
-      id: "CR-002",
-      disease: "Cholera",
-      facility: "Rwamagana District Hospital",
-      district: "Rwamagana",
-      status: "suspected",
-      reportedAt: "4 hours ago",
-      severity: "critical",
+    { 
+      label: "Active Outbreaks", 
+      value: caseStats?.activeOutbreaks.toString() ?? "...", 
+      change: "Ongoing monitoring", 
+      icon: AlertTriangle, 
+      variant: statsLoading ? "default" : (caseStats?.activeOutbreaks ?? 0) > 0 ? "warning" : "default" as const 
     },
-    {
-      id: "CR-003",
-      disease: "COVID-19",
-      facility: "Kibagabaga Hospital",
-      district: "Gasabo",
-      status: "confirmed",
-      reportedAt: "6 hours ago",
-      severity: "medium",
+    { 
+      label: "Facilities Reporting", 
+      value: "...", 
+      change: "Last 24h", 
+      icon: Users, 
+      variant: "default" as const 
+    },
+    { 
+      label: "Districts Affected", 
+      value: "...", 
+      change: "Under surveillance", 
+      icon: MapPin, 
+      variant: "default" as const 
     },
   ];
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card sticky top-0 z-10 backdrop-blur-sm bg-card/95">
+      <header className="border-b border-border sticky top-0 z-10 backdrop-blur-sm bg-card/95">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -120,7 +118,11 @@ const Dashboard = () => {
           </div>
 
           <div className="space-y-4">
-            {recentCases.map((caseReport) => (
+            {casesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : recentCases.map((caseReport) => (
               <div
                 key={caseReport.id}
                 className="p-4 border border-border rounded-lg hover:border-primary/50 transition-colors cursor-pointer"
@@ -129,16 +131,8 @@ const Dashboard = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-sm font-mono text-muted-foreground">{caseReport.id}</span>
-                      <Badge
-                        variant={
-                          caseReport.severity === "critical"
-                            ? "destructive"
-                            : caseReport.severity === "high"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {caseReport.disease}
+                      <Badge variant="default">
+                        {caseReport.disease_code}
                       </Badge>
                       <Badge
                         variant={caseReport.status === "confirmed" ? "default" : "secondary"}
@@ -146,13 +140,33 @@ const Dashboard = () => {
                         {caseReport.status}
                       </Badge>
                     </div>
-                    <p className="text-foreground font-medium mb-1">{caseReport.facility}</p>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <MapPin className="h-3 w-3" />
-                        {caseReport.district}
-                      </span>
-                      <span>{caseReport.reportedAt}</span>
+                        <span>{caseReport.location_detail || 'Location not specified'}</span>
+                      </div>
+                      
+                      {caseReport.symptoms && Array.isArray(caseReport.symptoms) && caseReport.symptoms.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {caseReport.symptoms.map((symptom, idx) => (
+                            <span key={idx} className="px-2 py-0.5 text-xs bg-muted rounded">
+                              {symptom}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>
+                          {caseReport.age_group} • {caseReport.gender}
+                        </span>
+                        <span>
+                          {caseReport.report_date
+                            ? formatDistanceToNow(new Date(caseReport.report_date), { addSuffix: true })
+                            : 'Recently'
+                          }
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <Button variant="ghost" size="sm">

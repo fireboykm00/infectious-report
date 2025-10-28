@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Activity, Shield, TrendingUp, Users, Bell, Database, ArrowRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { SupabaseTest } from "@/components/SupabaseTest";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -161,6 +162,13 @@ const Index = () => {
               </Button>
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* Database Connection Test */}
+      <section className="py-12 bg-muted/50">
+        <div className="container mx-auto px-4">
+          <SupabaseTest />
         </div>
       </section>
 
