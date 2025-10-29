@@ -1,9 +1,11 @@
+'use client'
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Activity, Users, MapPin, Plus, Bell, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { format, formatDistanceToNow } from "date-fns";
 import { useCaseReports, useCaseStatistics } from "@/lib/api";
 import type { CaseReport } from "@/lib/types";
@@ -58,7 +60,7 @@ const Dashboard = () => {
               <Button variant="ghost" size="icon">
                 <Bell className="h-5 w-5" />
               </Button>
-              <Link to="/report">
+              <Link href="/dashboard/report">
                 <Button className="gap-2">
                   <Plus className="h-4 w-4" />
                   New Report

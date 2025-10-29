@@ -1,5 +1,7 @@
+'use client'
+
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,8 +24,8 @@ const ROLES = [
 type UserRole = typeof ROLES[number]['id'];
 
 const Auth = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [isSignupDisabled, setIsSignupDisabled] = useState(false);
@@ -39,12 +41,12 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        const from = location.state?.from?.pathname || "/dashboard";
-        navigate(from, { replace: true });
+        const from = searchParams.get('from') || "/dashboard";
+        router.push(from);
       }
     };
     checkUser();
-  }, [navigate, location]);
+  }, [router, searchParams]);
 
   const [resendEmail, setResendEmail] = useState("");
   const [verificationSent, setVerificationSent] = useState(false);
@@ -108,8 +110,8 @@ const Auth = () => {
 
         if (data.session) {
           toast.success("Logged in successfully!");
-          const from = location.state?.from?.pathname || "/dashboard";
-          navigate(from, { replace: true });
+          const from = searchParams.get('from') || "/dashboard";
+          router.push(from);
         }
       } else {
         // Sign up flow
@@ -168,8 +170,8 @@ const Auth = () => {
         if (authData.session) {
           // User was automatically signed in, redirect to dashboard
           toast.success("Account created successfully!");
-          const from = location.state?.from?.pathname || "/dashboard";
-          navigate(from, { replace: true });
+          const from = searchParams.get('from') || "/dashboard";
+          router.push(from);
         } else {
           // Email verification required
           setIsLogin(true); // Switch to login view

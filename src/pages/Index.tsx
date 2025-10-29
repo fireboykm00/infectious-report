@@ -1,12 +1,15 @@
+'use client'
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Activity, Shield, TrendingUp, Users, Bell, Database, ArrowRight } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { SupabaseTest } from "@/components/SupabaseTest";
 
 const Index = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user } = useAuth();
   const features = [
     {
@@ -68,13 +71,13 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {user ? (
                 <>
-                  <Link to="/dashboard">
+                  <Link href="/dashboard">
                     <Button size="lg" variant="secondary" className="gap-2 text-lg px-8">
                       View Dashboard
                       <ArrowRight className="h-5 w-5" />
                     </Button>
                   </Link>
-                  <Link to="/report">
+                  <Link href="/dashboard/report">
                     <Button size="lg" variant="outline" className="gap-2 text-lg px-8 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10">
                       Report a Case
                     </Button>
@@ -85,7 +88,7 @@ const Index = () => {
                   size="lg"
                   variant="secondary"
                   className="gap-2 text-lg px-8"
-                  onClick={() => navigate("/auth")}
+                  onClick={() => router.push("/auth")}
                 >
                   Get Started
                   <ArrowRight className="h-5 w-5" />
@@ -155,7 +158,7 @@ const Index = () => {
             <p className="text-xl mb-8 text-primary-foreground/90">
               Join health authorities using IDSR to protect their communities
             </p>
-            <Link to={user ? "/dashboard" : "/auth"}>
+            <Link href={user ? "/dashboard" : "/auth"}>
               <Button size="lg" variant="secondary" className="gap-2 text-lg px-8">
                 Get Started
                 <ArrowRight className="h-5 w-5" />

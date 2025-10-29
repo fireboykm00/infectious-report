@@ -1,4 +1,7 @@
-import { Link, useLocation } from 'react-router-dom';
+'use client'
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   BarChart3,
   LayoutDashboard,
@@ -27,7 +30,7 @@ interface SidebarNavItem {
 
 export function Sidebar({ className }: SidebarProps) {
   const [open, setOpen] = useState(false);
-  const location = useLocation();
+  const pathname = usePathname();
   
   const sidebarNavItems: SidebarNavItem[] = [
     {
@@ -38,43 +41,50 @@ export function Sidebar({ className }: SidebarProps) {
       description: "Overview and case reporting"
     },
     {
+      title: "Report Case",
+      href: "/dashboard/report",
+      icon: <TestTube2 className="h-5 w-5" />,
+      roles: ["reporter", "district_officer", "national_officer", "admin"],
+      description: "Report new disease cases"
+    },
+    {
       title: "Lab Results",
-      href: "/lab",
+      href: "/dashboard/lab",
       icon: <TestTube2 className="h-5 w-5" />,
       roles: ["lab_tech", "admin"],
       description: "Manage laboratory tests"
     },
     {
       title: "Analytics",
-      href: "/analytics",
+      href: "/dashboard/analytics",
       icon: <BarChart3 className="h-5 w-5" />,
       roles: ["district_officer", "national_officer", "admin"],
       description: "Data insights and trends"
     },
     {
       title: "Outbreaks",
-      href: "/outbreaks",
+      href: "/dashboard/outbreaks",
       icon: <AlertCircle className="h-5 w-5" />,
       roles: ["district_officer", "national_officer", "admin"],
       description: "Track disease outbreaks"
     },
     {
       title: "Notifications",
-      href: "/notifications",
+      href: "/dashboard/notifications",
       icon: <Bell className="h-5 w-5" />,
       roles: ["reporter", "district_officer", "national_officer", "admin", "lab_tech"],
       description: "System alerts and messages"
     },
     {
       title: "Profile",
-      href: "/profile",
+      href: "/dashboard/profile",
       icon: <UserCircle className="h-5 w-5" />,
       roles: ["reporter", "district_officer", "national_officer", "admin", "lab_tech"],
       description: "Your account settings"
     },
     {
       title: "Admin",
-      href: "/admin",
+      href: "/dashboard/admin",
       icon: <Settings className="h-5 w-5" />,
       roles: ["admin"],
       description: "System configuration"
@@ -84,12 +94,12 @@ export function Sidebar({ className }: SidebarProps) {
   const renderNavLink = (item: SidebarNavItem, mobile: boolean = false) => (
     <Link
       key={item.href}
-      to={item.href}
+      href={item.href}
       onClick={() => mobile && setOpen(false)}
       className={cn(
         "group relative flex items-center rounded-lg px-3 py-2 text-sm transition-all duration-200",
         "hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 dark:hover:text-blue-400",
-        location.pathname === item.href 
+        pathname === item.href 
           ? "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400"
           : "text-gray-600 dark:text-gray-300",
         "font-medium"
@@ -97,7 +107,7 @@ export function Sidebar({ className }: SidebarProps) {
     >
       <span className={cn(
         "flex h-10 w-10 items-center justify-center rounded-lg",
-        location.pathname === item.href
+        pathname === item.href
           ? "text-blue-600 dark:text-blue-400"
           : "text-gray-500 group-hover:text-blue-600 dark:text-gray-400 dark:group-hover:text-blue-400"
       )}>
@@ -127,7 +137,7 @@ export function Sidebar({ className }: SidebarProps) {
         </SheetTrigger>
         <SheetContent side="left" className="pl-1 pr-0 border-r border-gray-200 dark:border-gray-800">
           <div className="px-7 py-4 border-b border-gray-200 dark:border-gray-800">
-            <Link to="/" className="flex items-center">
+            <Link href="/" className="flex items-center">
               <span className="font-bold text-lg text-gray-900 dark:text-white">IDSR Platform</span>
             </Link>
           </div>
@@ -147,7 +157,7 @@ export function Sidebar({ className }: SidebarProps) {
       )}>
         <div className="flex flex-col h-screen">
           <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-800">
-            <Link to="/" className="flex items-center">
+            <Link href="/" className="flex items-center">
               <span className="font-bold text-xl text-gray-900 dark:text-white">IDSR Platform</span>
             </Link>
           </div>
