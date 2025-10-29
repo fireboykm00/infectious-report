@@ -16,26 +16,37 @@ export function SupabaseTest() {
   const testConnection = async () => {
     try {
       setConnectionStatus('testing');
+      console.log('[SupabaseTest] Starting connection test...');
       
-      // Try to get the current user to test auth connection
+      // Test 1: Auth connection
       const { data: { session }, error: authError } = await supabase.auth.getSession();
-      if (authError) throw authError;
+      if (authError) {
+        console.error('[SupabaseTest] Auth error:', authError);
+        throw new Error(`Auth failed: ${authError.message}`);
+      }
+      console.log('[SupabaseTest] Auth test passed');
 
-      // Try to query the database
-      const { error: dbError } = await supabase
+      // Test 2: Database connection with a simple query that doesn't require tables
+      const { data, error: dbError } = await supabase
         .from('case_reports')
-        .select('count')
-        .limit(1)
-        .single();
+        .select('id', { count: 'exact', head: true });
       
-      if (dbError && dbError.code !== 'PGRST116') { // Ignore "no rows returned" error
-        throw dbError;
+      if (dbError) {
+        console.error('[SupabaseTest] Database error:', dbError);
+        // If table doesn't exist, that's expected for new projects
+        if (dbError.code === '42P01') {
+          setConnectionStatus('error');
+          setErrorMessage('Database connected but tables not created. Run migrations in Supabase dashboard.');
+          return;
+        }
+        throw new Error(`Database query failed: ${dbError.message}`);
       }
 
+      console.log('[SupabaseTest] Database test passed');
       setConnectionStatus('success');
       setErrorMessage('');
     } catch (error) {
-      console.error('Supabase connection error:', error);
+      console.error('[SupabaseTest] Connection error:', error);
       setConnectionStatus('error');
       setErrorMessage(error instanceof Error ? error.message : 'Unknown error occurred');
     }

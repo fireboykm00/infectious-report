@@ -5,11 +5,6 @@ import { toast } from "sonner";
 import type { AuthFormData, Profile, UserRole } from "@/types/auth";
 import type { Database } from "@/integrations/supabase/types";
 
-type UserWithRole = {
-  user: User | null;
-  role: Database['public']['Tables']['profiles']['Row']['role'] | null;
-};
-
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -85,23 +80,51 @@ export const useAuth = () => {
     const initializeAuth = async () => {
       try {
         setLoading(true);
+        console.log('[useAuth] Initializing auth...');
         
-        // Get initial session
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          // Fetch user role from user_roles table
-          const { data: userRoleData } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", session.user.id)
-            .maybeSingle();
+        // Get initial user (more secure than getSession)
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) {
+          console.error('[useAuth] Error getting user:', userError);
+        }
+        
+        if (!userError && user) {
+          setUser(user);
           
-          if (userRoleData && userRoleData.role) {
-            setUserRole({ role: userRoleData.role });
+          // Also get session for compatibility
+          const { data: { session } } = await supabase.auth.getSession();
+          setSession(session);
+
+          // Fetch user role from user_roles table
+          try {
+            const { data: userRoleData, error } = await supabase
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", user.id)
+              .maybeSingle();
+            
+            if (!error && userRoleData && userRoleData.role) {
+              setUserRole({ role: userRoleData.role });
+            } else if (error) {
+              console.warn('Failed to fetch user role:', error);
+              // Fallback: use role from user_metadata if available
+              const metaRole = user.user_metadata?.role;
+              if (metaRole) {
+                setUserRole({ role: metaRole as UserRole });
+              }
+            }
+          } catch (err) {
+            console.error('Error fetching user role:', err);
+            // Fallback to user_metadata
+            const metaRole = user.user_metadata?.role;
+            if (metaRole) {
+              setUserRole({ role: metaRole as UserRole });
+            }
           }
+        } else {
+          setUser(null);
+          setSession(null);
         }
 
         // Set up auth state listener
@@ -111,14 +134,29 @@ export const useAuth = () => {
             setUser(session?.user ?? null);
 
             if (session?.user) {
-              const { data: userRoleData } = await supabase
-                .from("user_roles")
-                .select("role")
-                .eq("user_id", session.user.id)
-                .single();
-              
-              if (userRoleData) {
-                setUserRole({ role: userRoleData.role as UserRole });
+              try {
+                const { data: userRoleData, error } = await supabase
+                  .from("user_roles")
+                  .select("role")
+                  .eq("user_id", session.user.id)
+                  .maybeSingle();
+                
+                if (!error && userRoleData) {
+                  setUserRole({ role: userRoleData.role as UserRole });
+                } else {
+                  // Fallback to user_metadata
+                  const metaRole = session.user.user_metadata?.role;
+                  if (metaRole) {
+                    setUserRole({ role: metaRole as UserRole });
+                  }
+                }
+              } catch (err) {
+                console.error('Error fetching user role:', err);
+                // Fallback to user_metadata
+                const metaRole = session.user.user_metadata?.role;
+                if (metaRole) {
+                  setUserRole({ role: metaRole as UserRole });
+                }
               }
             } else {
               setUserRole(null);
@@ -127,17 +165,30 @@ export const useAuth = () => {
         );
 
         setLoading(false);
+        console.log('[useAuth] Auth initialized successfully');
 
         return () => {
           subscription.unsubscribe();
         };
       } catch (error) {
-        console.error("Error initializing auth:", error);
+        console.error("[useAuth] Error initializing auth:", error);
         setLoading(false);
       }
     };
 
-    initializeAuth();
+    // Set timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      console.warn('[useAuth] Auth initialization timeout - forcing loading to false');
+      setLoading(false);
+    }, 10000); // 10 second timeout
+
+    initializeAuth().finally(() => {
+      clearTimeout(timeoutId);
+    });
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const signOut = async () => {

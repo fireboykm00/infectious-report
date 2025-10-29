@@ -7,13 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Activity, Users, MapPin, Plus, Bell, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { format, formatDistanceToNow } from "date-fns";
-import { useCaseReports, useCaseStatistics } from "@/lib/api";
+import { useCaseReportsInfinite, useCaseStatistics } from "@/lib/api-optimized";
 import type { CaseReport } from "@/lib/types";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<"all" | "active" | "alert">("all");
   const { data: caseStats, isLoading: statsLoading } = useCaseStatistics();
-  const { data: recentCases = [], isLoading: casesLoading } = useCaseReports(1, 5);
+  const { data: casesData, isLoading: casesLoading } = useCaseReportsInfinite();
+  
+  // Get first 5 cases from first page
+  const recentCases = casesData?.pages[0]?.data.slice(0, 5) || [];
 
   const stats = [
     { 
@@ -163,8 +166,8 @@ const Dashboard = () => {
                           {caseReport.age_group} • {caseReport.gender}
                         </span>
                         <span>
-                          {caseReport.report_date
-                            ? formatDistanceToNow(new Date(caseReport.report_date), { addSuffix: true })
+                          {caseReport.created_at
+                            ? formatDistanceToNow(new Date(caseReport.created_at), { addSuffix: true })
                             : 'Recently'
                           }
                         </span>

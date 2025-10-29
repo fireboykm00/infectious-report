@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   BarChart3,
   LayoutDashboard,
@@ -11,12 +11,17 @@ import {
   Settings,
   Menu,
   UserCircle,
+  LogOut,
+  Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { ScrollArea } from './ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 type SidebarProps = React.HTMLAttributes<HTMLDivElement>;
 
@@ -31,8 +36,24 @@ interface SidebarNavItem {
 export function Sidebar({ className }: SidebarProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, userRole: userRoleData } = useAuth();
   
-  const sidebarNavItems: SidebarNavItem[] = [
+  // Get user role from userRoleData
+  const userRole = userRoleData?.role || 'reporter';
+  
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success('Logged out successfully');
+      router.push('/auth');
+    } catch (error) {
+      toast.error('Failed to logout');
+      console.error('Logout error:', error);
+    }
+  };
+  
+  const allNavItems: SidebarNavItem[] = [
     {
       title: "Dashboard",
       href: "/dashboard",
@@ -43,7 +64,7 @@ export function Sidebar({ className }: SidebarProps) {
     {
       title: "Report Case",
       href: "/dashboard/report",
-      icon: <TestTube2 className="h-5 w-5" />,
+      icon: <Activity className="h-5 w-5" />,
       roles: ["reporter", "district_officer", "national_officer", "admin"],
       description: "Report new disease cases"
     },
@@ -90,6 +111,11 @@ export function Sidebar({ className }: SidebarProps) {
       description: "System configuration"
     },
   ];
+
+  // Filter sidebar items based on user role (RBAC)
+  const sidebarNavItems = allNavItems.filter(item => 
+    !item.roles || item.roles.includes(userRole)
+  );
 
   const renderNavLink = (item: SidebarNavItem, mobile: boolean = false) => (
     <Link
@@ -141,11 +167,21 @@ export function Sidebar({ className }: SidebarProps) {
               <span className="font-bold text-lg text-gray-900 dark:text-white">IDSR Platform</span>
             </Link>
           </div>
-          <ScrollArea className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
+          <ScrollArea className="my-4 h-[calc(100vh-12rem)] pb-10 pl-6">
             <div className="flex flex-col space-y-2">
               {sidebarNavItems.map((item) => renderNavLink(item, true))}
             </div>
           </ScrollArea>
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+            >
+              <LogOut className="h-5 w-5 mr-3" />
+              Logout
+            </Button>
+          </div>
         </SheetContent>
       </Sheet>
 
@@ -166,6 +202,19 @@ export function Sidebar({ className }: SidebarProps) {
               {sidebarNavItems.map((item) => renderNavLink(item))}
             </div>
           </ScrollArea>
+          <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+            <div className="mb-3 px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
+              {user?.email}
+            </div>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+            >
+              <LogOut className="h-5 w-5 mr-3" />
+              Logout
+            </Button>
+          </div>
         </div>
       </div>
     </>

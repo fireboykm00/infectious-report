@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  experimental: {
-    appDir: true,
-  },
   transpilePackages: ['leaflet'],
   webpack: (config) => {
     config.resolve.alias = {

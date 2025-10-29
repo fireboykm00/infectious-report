@@ -39,10 +39,10 @@ const Auth = () => {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const from = searchParams.get('from') || "/dashboard";
-        router.push(from);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const from = searchParams?.get('from') || "/dashboard";
+        router.replace(from);
       }
     };
     checkUser();
@@ -109,9 +109,18 @@ const Auth = () => {
         }
 
         if (data.session) {
+          console.log('Login successful:', data);
           toast.success("Logged in successfully!");
-          const from = searchParams.get('from') || "/dashboard";
-          router.push(from);
+          
+          // Wait a moment for cookies to be set, then refresh and redirect
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          const from = searchParams?.get('from') || "/dashboard";
+          
+          // Use replace instead of push to avoid back button issues
+          // And refresh to ensure middleware picks up the new session
+          router.refresh();
+          router.replace(from);
         }
       } else {
         // Sign up flow
@@ -170,8 +179,13 @@ const Auth = () => {
         if (authData.session) {
           // User was automatically signed in, redirect to dashboard
           toast.success("Account created successfully!");
-          const from = searchParams.get('from') || "/dashboard";
-          router.push(from);
+          
+          // Wait a moment for cookies to be set
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          const from = searchParams?.get('from') || "/dashboard";
+          router.refresh();
+          router.replace(from);
         } else {
           // Email verification required
           setIsLogin(true); // Switch to login view

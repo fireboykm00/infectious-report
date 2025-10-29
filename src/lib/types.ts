@@ -25,7 +25,7 @@ export type CaseReport = Tables['case_reports']['Row'] & {
   districts?: Tables['districts']['Row'];
 };
 
-export type CaseReportInput = Omit<Tables['case_reports']['Insert'], 'id' | 'reported_date'>;
+export type CaseReportInput = Omit<Tables['case_reports']['Insert'], 'id' | 'report_date'>;
 
 export type Outbreak = Tables['outbreaks']['Row'] & {
   districts?: Tables['districts']['Row'];
