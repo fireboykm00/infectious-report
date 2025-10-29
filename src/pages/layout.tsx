@@ -11,7 +11,5 @@ export default function RootLayout({ children }: LayoutProps) {
       {children}
     </div>
   );
-      </body>
-    </html>
-  );
 }
+   

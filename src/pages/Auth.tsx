@@ -337,7 +337,7 @@ const Auth = () => {
                 )}
               </Button>
               <p className="text-xs text-muted-foreground text-center">
-                Please check both your inbox and spam folder. If you still don't receive the email,
+                Please check both your inbox and spam folder. If you still don&apos;t receive the email,
                 try clicking the resend button again or contact support.
               </p>
             </div>
