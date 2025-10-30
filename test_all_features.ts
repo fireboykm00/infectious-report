@@ -3,7 +3,7 @@
  * Run this after applying fixes to verify all features work
  */
 
-import { supabase } from './client'
+import { supabase } from './src/integrations/supabase/client'
 
 interface TestResult {
   name: string
