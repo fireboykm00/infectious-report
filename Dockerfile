@@ -1,33 +1,51 @@
-# Use Node.js LTS (Light) as base image
-FROM node:20-slim as builder
+# Use Node.js LTS as base image
+FROM node:20-slim AS base
 
-# Set working directory
+# Install dependencies only when needed
+FROM base AS deps
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY bun.lockb ./
+COPY bun.lockb* ./
 
 # Install dependencies
 RUN npm ci
 
-# Copy source code
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build the application
+# Set environment variable to enable standalone output
+ENV NEXT_TELEMETRY_DISABLED 1
+
+# Build Next.js application
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine as production
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app
 
-# Copy built assets from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Create a non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Expose port 80
-EXPOSE 80
+# Copy built application
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+# Run the Next.js server
+CMD ["node", "server.js"]

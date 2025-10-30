@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -6,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Activity, ArrowLeft, Loader2, Upload, X } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useDiseaseCodes } from "@/hooks/useDiseaseCodes";
 import { useDistricts } from "@/hooks/useLocation";
@@ -29,7 +32,7 @@ const GENDERS = [
 ] as const;
 
 const ReportCase = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: diseases, isLoading: diseasesLoading } = useDiseaseCodes();
   const { data: districts, isLoading: districtsLoading } = useDistricts();
@@ -167,7 +170,7 @@ const ReportCase = () => {
       await createCase.mutateAsync(caseData);
 
       toast.success("Case report submitted successfully!");
-      navigate("/dashboard");
+      router.push("/dashboard");
     } catch (error: any) {
       console.error("Submission error:", error);
       toast.error(error?.message || "Failed to submit case report. Please try again.");
@@ -182,7 +185,7 @@ const ReportCase = () => {
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-            <Link to="/dashboard">
+            <Link href="/dashboard">
               <Button variant="ghost" size="icon">
                 <ArrowLeft className="h-5 w-5" />
               </Button>

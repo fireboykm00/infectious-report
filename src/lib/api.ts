@@ -44,7 +44,7 @@ export const useCasesByDisease = (disease: string) => {
         .from('case_reports')
         .select('*')
         .eq('disease_code', disease)
-        .order('reported_date', { ascending: false });
+        .order('report_date', { ascending: false });
 
       if (error) throw error;
       return data;

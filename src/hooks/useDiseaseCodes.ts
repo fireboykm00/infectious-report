@@ -37,7 +37,7 @@ export const useActiveDiseases = () => {
           )
         `)
         .eq('status', 'confirmed')
-        .order('reported_date', { ascending: false });
+        .order('report_date', { ascending: false });
 
       if (error) throw error;
 

@@ -1,17 +1,22 @@
+'use client'
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Activity, Users, MapPin, Plus, Bell, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { format, formatDistanceToNow } from "date-fns";
-import { useCaseReports, useCaseStatistics } from "@/lib/api";
+import { useCaseReportsInfinite, useCaseStatistics } from "@/lib/api-optimized";
 import type { CaseReport } from "@/lib/types";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<"all" | "active" | "alert">("all");
   const { data: caseStats, isLoading: statsLoading } = useCaseStatistics();
-  const { data: recentCases = [], isLoading: casesLoading } = useCaseReports(1, 5);
+  const { data: casesData, isLoading: casesLoading } = useCaseReportsInfinite();
+  
+  // Get first 5 cases from first page
+  const recentCases = casesData?.pages[0]?.data.slice(0, 5) || [];
 
   const stats = [
     { 
@@ -58,7 +63,7 @@ const Dashboard = () => {
               <Button variant="ghost" size="icon">
                 <Bell className="h-5 w-5" />
               </Button>
-              <Link to="/report">
+              <Link href="/dashboard/report">
                 <Button className="gap-2">
                   <Plus className="h-4 w-4" />
                   New Report
@@ -161,8 +166,8 @@ const Dashboard = () => {
                           {caseReport.age_group} • {caseReport.gender}
                         </span>
                         <span>
-                          {caseReport.report_date
-                            ? formatDistanceToNow(new Date(caseReport.report_date), { addSuffix: true })
+                          {caseReport.created_at
+                            ? formatDistanceToNow(new Date(caseReport.created_at), { addSuffix: true })
                             : 'Recently'
                           }
                         </span>

@@ -1,5 +1,7 @@
+'use client'
+
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,8 +24,8 @@ const ROLES = [
 type UserRole = typeof ROLES[number]['id'];
 
 const Auth = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [isSignupDisabled, setIsSignupDisabled] = useState(false);
@@ -37,14 +39,14 @@ const Auth = () => {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const from = location.state?.from?.pathname || "/dashboard";
-        navigate(from, { replace: true });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const from = searchParams?.get('from') || "/dashboard";
+        router.replace(from);
       }
     };
     checkUser();
-  }, [navigate, location]);
+  }, [router, searchParams]);
 
   const [resendEmail, setResendEmail] = useState("");
   const [verificationSent, setVerificationSent] = useState(false);
@@ -107,9 +109,18 @@ const Auth = () => {
         }
 
         if (data.session) {
+          console.log('Login successful:', data);
           toast.success("Logged in successfully!");
-          const from = location.state?.from?.pathname || "/dashboard";
-          navigate(from, { replace: true });
+          
+          // Wait a moment for cookies to be set, then refresh and redirect
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          const from = searchParams?.get('from') || "/dashboard";
+          
+          // Use replace instead of push to avoid back button issues
+          // And refresh to ensure middleware picks up the new session
+          router.refresh();
+          router.replace(from);
         }
       } else {
         // Sign up flow
@@ -168,8 +179,13 @@ const Auth = () => {
         if (authData.session) {
           // User was automatically signed in, redirect to dashboard
           toast.success("Account created successfully!");
-          const from = location.state?.from?.pathname || "/dashboard";
-          navigate(from, { replace: true });
+          
+          // Wait a moment for cookies to be set
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          const from = searchParams?.get('from') || "/dashboard";
+          router.refresh();
+          router.replace(from);
         } else {
           // Email verification required
           setIsLogin(true); // Switch to login view
@@ -335,7 +351,7 @@ const Auth = () => {
                 )}
               </Button>
               <p className="text-xs text-muted-foreground text-center">
-                Please check both your inbox and spam folder. If you still don't receive the email,
+                Please check both your inbox and spam folder. If you still don&apos;t receive the email,
                 try clicking the resend button again or contact support.
               </p>
             </div>
