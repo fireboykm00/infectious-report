@@ -1,45 +1,19 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient } from '@/lib/supabase/middleware'
+import { NextResponse, type NextRequest } from 'next/server'
 
+/**
+ * Middleware for authentication and route protection
+ * Runs on every request to protected routes
+ */
 export async function middleware(req: NextRequest) {
-  // Create a response that we can modify
-  let response = NextResponse.next({
-    request: req,
-  });
+  // Create Supabase client for middleware
+  const { supabase, response } = createServerClient(req)
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return req.cookies.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          // Update the response cookies, not the request
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name: string, options: CookieOptions) {
-          // Update the response cookies
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
-        },
-      },
-    }
-  );
-
-  // Use getUser() instead of getSession() for secure server-side validation
+  // Use getUser() for secure server-side validation
   const {
     data: { user },
     error,
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getUser()
 
   // Debug logging
   console.log('[Middleware]', {
